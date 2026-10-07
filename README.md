@@ -2,8 +2,10 @@
 
 Мобильное приложение на Flutter + бэкенд на Python FastAPI для учёта поездок и подсчёта дохода за смену.
 
-**Демо:** [driver-shift-diary.vercel.app](https://driver-shift-diary.vercel.app)  
-**API:** [driver-shift-diary.up.railway.app](https://driver-shift-diary.up.railway.app/docs)
+**Демо (веб):** [driver-shift-diary.vercel.app](https://driver-shift-diary.vercel.app)  
+**API (Railway):** [driver-shift-diary.up.railway.app](https://driver-shift-diary.up.railway.app/docs)
+
+Все платформы (Android, iOS, Web) подключаются к единому бэкенду на Railway — локальный сервер не требуется.
 
 ## Архитектура
 
