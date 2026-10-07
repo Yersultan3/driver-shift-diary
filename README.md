@@ -1,90 +1,81 @@
 # Дневник смен водителя
 
-Flutter mobile app + Python FastAPI backend for tracking driver shift trips and earnings.
+Мобильное приложение на Flutter + бэкенд на Python FastAPI для учёта поездок и подсчёта дохода за смену.
 
-## Architecture
+## Архитектура
 
 ```
 arqa_project/
-├── server/               # Python FastAPI backend
-│   ├── main.py           # API endpoints
+├── server/               # Бэкенд Python FastAPI
+│   ├── main.py           # Эндпоинты API
 │   ├── requirements.txt
-│   ├── data/trips.json   # persistent JSON storage (sample data included)
+│   ├── data/trips.json   # Хранилище данных (JSON-файл)
 │   └── tests/
-│       └── test_api.py   # pytest — summary calc + duplicate protection
-└── lib/                  # Flutter mobile app
+│       └── test_api.py   # pytest — расчёт сводки + защита от дублей
+└── lib/                  # Flutter-приложение
     ├── main.dart
-    ├── models/trip.dart          # Trip + DaySummary models
-    ├── services/api_service.dart # HTTP client wrapper
+    ├── models/trip.dart          # Модели Trip и DaySummary
+    ├── services/api_service.dart # HTTP-клиент
     └── screens/
-        ├── home_screen.dart      # daily summary + trip list + day nav
-        └── add_trip_screen.dart  # add trip form
+        ├── home_screen.dart      # Сводка, список поездок, навигация по датам
+        └── add_trip_screen.dart  # Форма добавления поездки
 ```
 
-## Running the server
+## Запуск сервера
 
-Requires Python 3.10+ and pip.
+Требуется Python 3.10+ и pip.
 
 ```bash
 cd server
 pip install -r requirements.txt
 python -m uvicorn main:app --reload --port 8000
-# API available at http://localhost:8000
-# Interactive docs: http://localhost:8000/docs
+# API доступен по адресу http://localhost:8000
+# Интерактивная документация: http://localhost:8000/docs
 ```
 
-### API endpoints
+### Эндпоинты API
 
-| Method | Path | Description |
-|--------|------|-------------|
-| GET | `/trips?date=YYYY-MM-DD` | List trips for a day |
-| GET | `/summary?date=YYYY-MM-DD` | Daily summary (count, revenue, commission, net, cash/card) |
-| POST | `/trips` | Add a trip (validates amount > 0, end > start, no duplicate id) |
+| Метод | Путь | Описание |
+|-------|------|----------|
+| GET | `/trips?date=YYYY-MM-DD` | Список поездок за день |
+| GET | `/summary?date=YYYY-MM-DD` | Сводка за день (количество, выручка, комиссия, чистый доход, наличные/карта) |
+| POST | `/trips` | Добавить поездку (валидация: сумма > 0, конец позже начала, нет дублей по ID) |
 
-### Backend tests
+### Тесты бэкенда
 
 ```bash
 cd server
 pytest -v
 ```
 
-Covers: summary calculation, date isolation, duplicate 409, validation (amount ≤ 0, end ≤ start, bad payment type).
+Покрытие: расчёт сводки, изоляция по датам, дубль возвращает 409, валидация (сумма ≤ 0, конец ≤ начала, неверный тип оплаты).
 
-## Running the Flutter app
+## Запуск Flutter-приложения
 
 ```bash
 flutter pub get
 flutter run
 ```
 
-> **Android emulator**: change `localhost` to `10.0.2.2` in `lib/services/api_service.dart`.  
-> **Real Android device**: forward the port via ADB before running:  
+> **Эмулятор Android**: замените `localhost` на `10.0.2.2` в `lib/services/api_service.dart`.
+> **Реальное Android-устройство**: перед запуском пробросьте порт через ADB:
 > ```bash
 > adb reverse tcp:8000 tcp:8000
 > ```
 
-The app shows today's trips by default. Use `<` / `>` to switch days. Tap `+` to add a trip — commission is auto-set to 15% of the amount and is editable.
+По умолчанию отображаются поездки за сегодня. Кнопки `<` / `>` переключают дни. Кнопка `+` открывает форму добавления поездки — комиссия рассчитывается автоматически (15% от суммы) и доступна для редактирования.
 
-### Flutter tests
+### Тесты Flutter
 
 ```bash
 flutter test
 ```
 
-Covers: `DaySummary.fromTrips` calculation (count, total, commission, net income, cash/card split) and duplicate-protection logic via a mock HTTP client.
+Покрытие: расчёт `DaySummary.fromTrips` (количество, итого, комиссия, чистый доход, разбивка наличные/карта) и логика защиты от дублей через mock HTTP-клиент.
 
-## What was built
+## Что реализовано
 
-- Server stores trips in a local JSON file; the date filter correctly handles timezone-aware ISO 8601 timestamps (e.g. `+05:00`)
-- `POST /trips` returns 409 on duplicate `id`; client shows a snackbar
-- Form auto-calculates 15% commission and validates on the client before sending
-- Russian locale for date labels and number formatting (thousands separator)
-
-## AI usage
-
-Claude was used to scaffold all files (FastAPI structure, Flutter screens, test skeletons). Fixes applied manually / after review:
-
-- Pydantic v2 cross-field validation requires `@model_validator(mode="after")` — the initial `@validator` skeleton was outdated v1 syntax.
-- `initializeDateFormatting('ru', null)` must be awaited in `main()` before `DateFormat(..., 'ru')` is used — the AI omitted the `await`.
-- `DATA_FILE` path made absolute via `os.path.abspath(__file__)` so the server works from any working directory, not just `server/`.
-- Flutter `_MockClient` used `request.finalize().bytesToString()` initially; simplified to `(request as http.Request).body` which is synchronous and avoids the stream complexity.
+- Сервер хранит поездки в локальном JSON-файле; фильтр по дате корректно обрабатывает ISO 8601 с временной зоной (например, `+05:00`)
+- `POST /trips` возвращает 409 при дублировании `id`; клиент показывает snackbar
+- Форма автоматически рассчитывает комиссию 15% и валидирует данные на стороне клиента перед отправкой
+- Русская локаль для подписей дат и форматирования чисел (разделитель тысяч)
