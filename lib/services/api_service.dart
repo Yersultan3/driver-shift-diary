@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import '../models/trip.dart';
 
@@ -11,14 +12,18 @@ class ApiException implements Exception {
   String toString() => 'ApiException($statusCode): $message';
 }
 
+const _prodUrl = 'https://driver-shift-diary.up.railway.app';
+const _devUrl = 'http://localhost:8000';
+
 class ApiService {
   final String baseUrl;
   final http.Client _client;
 
   ApiService({
-    this.baseUrl = 'http://localhost:8000',
+    String? baseUrl,
     http.Client? client,
-  }) : _client = client ?? http.Client();
+  })  : baseUrl = baseUrl ?? (kIsWeb ? _prodUrl : _devUrl),
+        _client = client ?? http.Client();
 
   String _fmtDate(DateTime d) =>
       '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
