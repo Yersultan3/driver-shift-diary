@@ -16,7 +16,7 @@ class _MockClient extends http.BaseClient {
       final trip = jsonDecode(body) as Map<String, dynamic>;
       final id = trip['id'] as String;
       if (_store.containsKey(id)) {
-        return _resp(409, jsonEncode({'detail': 'duplicate trip id'}));
+        return _resp(200, _store[id]!);
       }
       _store[id] = body;
       return _resp(201, body);
@@ -101,14 +101,10 @@ void main() {
       expect(result.id, 't1');
     });
 
-    test('same id a second time throws ApiException 409', () async {
+    test('same id a second time succeeds (idempotent)', () async {
       await api.addTrip(_trip('t1'));
-      expect(
-        () => api.addTrip(_trip('t1')),
-        throwsA(
-          isA<ApiException>().having((e) => e.statusCode, 'statusCode', 409),
-        ),
-      );
+      final result = await api.addTrip(_trip('t1'));
+      expect(result.id, 't1');
     });
 
     test('different id is allowed', () async {

@@ -34,7 +34,7 @@ class _HomeScreenState extends State<HomeScreen> {
       final trips = await widget.api.getTrips(_date);
       final summary = await widget.api.getSummary(_date);
       setState(() {
-        _trips = trips;
+        _trips = trips..sort((a, b) => a.start.compareTo(b.start));
         _summary = summary;
       });
     } catch (e) {

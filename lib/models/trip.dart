@@ -17,8 +17,8 @@ class Trip {
 
   factory Trip.fromJson(Map<String, dynamic> json) => Trip(
         id: json['id'] as String,
-        start: DateTime.parse(json['start'] as String),
-        end: DateTime.parse(json['end'] as String),
+        start: DateTime.parse(json['start'] as String).toLocal(),
+        end: DateTime.parse(json['end'] as String).toLocal(),
         amount: (json['amount'] as num).toDouble(),
         payment: json['payment'] as String,
         commission: (json['commission'] as num).toDouble(),

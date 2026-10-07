@@ -57,10 +57,11 @@ class TestDuplicates:
         r = client.post("/trips", json=TRIP_1)
         assert r.status_code == 201
 
-    def test_same_id_returns_409(self, client):
+    def test_same_id_returns_200_idempotent(self, client):
         client.post("/trips", json=TRIP_1)
         r = client.post("/trips", json=TRIP_1)
-        assert r.status_code == 409
+        assert r.status_code == 200
+        assert r.json()["id"] == TRIP_1["id"]
 
     def test_different_id_succeeds(self, client):
         client.post("/trips", json=TRIP_1)

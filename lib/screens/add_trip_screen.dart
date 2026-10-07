@@ -17,6 +17,7 @@ class _AddTripScreenState extends State<AddTripScreen> {
   final _formKey = GlobalKey<FormState>();
   late DateTime _start;
   late DateTime _end;
+  late final String _tripId;
   final _amountCtrl = TextEditingController();
   final _commissionCtrl = TextEditingController();
   String _payment = 'card';
@@ -28,6 +29,7 @@ class _AddTripScreenState extends State<AddTripScreen> {
     final d = widget.date;
     _start = DateTime(d.year, d.month, d.day, 9, 0);
     _end = DateTime(d.year, d.month, d.day, 9, 30);
+    _tripId = 'trip_${DateTime.now().millisecondsSinceEpoch}';
   }
 
   @override
@@ -83,7 +85,7 @@ class _AddTripScreenState extends State<AddTripScreen> {
     }
 
     final trip = Trip(
-      id: 'trip_${DateTime.now().millisecondsSinceEpoch}',
+      id: _tripId,
       start: _start,
       end: _end,
       amount: double.parse(_amountCtrl.text),

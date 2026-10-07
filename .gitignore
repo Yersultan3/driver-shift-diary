@@ -50,3 +50,10 @@ node_modules/
 
 # Server runtime data
 server/data/trips.json
+
+# Vercel CLI tokens — protect root and build/web
+.env*
+.vercel/
+.vercelignore
+build/web/.env*
+build/web/.vercel/

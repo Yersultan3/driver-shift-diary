@@ -51,10 +51,9 @@ class ApiService {
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode(trip.toJson()),
     );
-    if (resp.statusCode == 409) {
-      throw const ApiException(409, 'Поездка с таким ID уже существует');
+    if (resp.statusCode != 201 && resp.statusCode != 200) {
+      throw ApiException(resp.statusCode, resp.body);
     }
-    if (resp.statusCode != 201) throw ApiException(resp.statusCode, resp.body);
     return Trip.fromJson(jsonDecode(resp.body) as Map<String, dynamic>);
   }
 }
