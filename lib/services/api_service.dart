@@ -22,7 +22,7 @@ class ApiService {
   ApiService({
     String? baseUrl,
     http.Client? client,
-  })  : baseUrl = baseUrl ?? (kIsWeb ? _prodUrl : _devUrl),
+  })  : baseUrl = baseUrl ?? _prodUrl,
         _client = client ?? http.Client();
 
   String _fmtDate(DateTime d) =>
