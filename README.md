@@ -1,86 +1,90 @@
 # Дневник смен водителя
 
-Мобильное приложение на Flutter + бэкенд на Python FastAPI для учёта поездок и подсчёта дохода за смену.
+Мобильное и веб-приложение для учёта поездок и подсчёта дохода за рабочую смену.
 
-**Демо (веб):** [driver-shift-diary.vercel.app](https://driver-shift-diary.vercel.app)  
-**API (Railway):** [driver-shift-diary.up.railway.app](https://driver-shift-diary.up.railway.app/docs)
+**Веб:** [driver-shift-diary.vercel.app](https://driver-shift-diary.vercel.app)  
+**API:** [driver-shift-diary.up.railway.app/docs](https://driver-shift-diary.up.railway.app/docs)
 
-Все платформы (Android, iOS, Web) подключаются к единому бэкенду на Railway — локальный сервер не требуется.
+---
+
+## Стек
+
+| Слой | Технология |
+|------|------------|
+| Мобильное / Веб | Flutter (Dart) |
+| Бэкенд | Python, FastAPI, Uvicorn |
+| Хранилище | JSON-файл на сервере |
+| Деплой фронта | Vercel |
+| Деплой бэкенда | Railway |
+
+---
+
+## Возможности
+
+- Просмотр поездок за любой день — навигация кнопками `<` / `>`
+- Дневная сводка: выручка, комиссия, чистый доход, разбивка наличные / карта
+- Добавление поездки: время, сумма, тип оплаты, комиссия (15% по умолчанию)
+- Защита от дублей по ID поездки
+- Русская локаль для дат и форматирования чисел
+
+---
 
 ## Архитектура
 
 ```
-arqa_project/
-├── server/               # Бэкенд Python FastAPI
-│   ├── main.py           # Эндпоинты API
+├── lib/
+│   ├── main.dart
+│   ├── models/trip.dart               # Trip, DaySummary
+│   ├── services/api_service.dart      # HTTP-клиент → Railway
+│   └── screens/
+│       ├── home_screen.dart           # Главный экран
+│       └── add_trip_screen.dart       # Форма добавления
+├── server/
+│   ├── main.py                        # FastAPI: /trips, /summary
 │   ├── requirements.txt
-│   ├── data/trips.json   # Хранилище данных (JSON-файл)
-│   └── tests/
-│       └── test_api.py   # pytest — расчёт сводки + защита от дублей
-└── lib/                  # Flutter-приложение
-    ├── main.dart
-    ├── models/trip.dart          # Модели Trip и DaySummary
-    ├── services/api_service.dart # HTTP-клиент
-    └── screens/
-        ├── home_screen.dart      # Сводка, список поездок, навигация по датам
-        └── add_trip_screen.dart  # Форма добавления поездки
+│   └── tests/test_api.py
+└── build/web/                         # Собранный Flutter web → Vercel
 ```
 
-## Запуск сервера
+---
 
-Требуется Python 3.10+ и pip.
+## API
 
+| Метод | Путь | Описание |
+|-------|------|----------|
+| `GET` | `/trips?date=YYYY-MM-DD` | Список поездок за день |
+| `GET` | `/summary?date=YYYY-MM-DD` | Сводка за день |
+| `POST` | `/trips` | Добавить поездку |
+
+Валидация: сумма > 0, конец позже начала, `payment` — `cash` или `card`, дубли по `id` → 409.
+
+---
+
+## Запуск локально
+
+### Бэкенд
 ```bash
 cd server
 pip install -r requirements.txt
 python -m uvicorn main:app --reload --port 8000
-# API доступен по адресу http://localhost:8000
-# Интерактивная документация: http://localhost:8000/docs
 ```
 
-### Эндпоинты API
-
-| Метод | Путь | Описание |
-|-------|------|----------|
-| GET | `/trips?date=YYYY-MM-DD` | Список поездок за день |
-| GET | `/summary?date=YYYY-MM-DD` | Сводка за день (количество, выручка, комиссия, чистый доход, наличные/карта) |
-| POST | `/trips` | Добавить поездку (валидация: сумма > 0, конец позже начала, нет дублей по ID) |
-
-### Тесты бэкенда
-
+### Flutter (Android — реальное устройство)
 ```bash
-cd server
-pytest -v
-```
-
-Покрытие: расчёт сводки, изоляция по датам, дубль возвращает 409, валидация (сумма ≤ 0, конец ≤ начала, неверный тип оплаты).
-
-## Запуск Flutter-приложения
-
-```bash
-flutter pub get
+adb reverse tcp:8000 tcp:8000
 flutter run
 ```
 
-> **Эмулятор Android**: замените `localhost` на `10.0.2.2` в `lib/services/api_service.dart`.
-> **Реальное Android-устройство**: перед запуском пробросьте порт через ADB:
-> ```bash
-> adb reverse tcp:8000 tcp:8000
-> ```
-
-По умолчанию отображаются поездки за сегодня. Кнопки `<` / `>` переключают дни. Кнопка `+` открывает форму добавления поездки — комиссия рассчитывается автоматически (15% от суммы) и доступна для редактирования.
-
-### Тесты Flutter
-
+### Тесты
 ```bash
+cd server && pytest -v
 flutter test
 ```
 
-Покрытие: расчёт `DaySummary.fromTrips` (количество, итого, комиссия, чистый доход, разбивка наличные/карта) и логика защиты от дублей через mock HTTP-клиент.
+---
 
-## Что реализовано
+## Деплой
 
-- Сервер хранит поездки в локальном JSON-файле; фильтр по дате корректно обрабатывает ISO 8601 с временной зоной (например, `+05:00`)
-- `POST /trips` возвращает 409 при дублировании `id`; клиент показывает snackbar
-- Форма автоматически рассчитывает комиссию 15% и валидирует данные на стороне клиента перед отправкой
-- Русская локаль для подписей дат и форматирования чисел (разделитель тысяч)
+Бэкенд задеплоен на **Railway** — все платформы (Android, Web) подключаются к нему напрямую, локальный сервер не требуется.
+
+Веб-версия собрана командой `flutter build web --release` и задеплоена на **Vercel**.
